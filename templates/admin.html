@@ -1,56 +1,90 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="row">
-    <div class="col-md-6">
+    <div class="col-md-4">
         <div class="card shadow-sm mb-4">
-            <div class="card-header bg-dark text-white">Reģistrēt jaunu skolotāju</div>
+            <div class="card-header bg-dark text-white">Pievienot skolotāju</div>
             <div class="card-body">
                 <form method="POST">
-                    <div class="mb-3">
-                        <label>Lietotājvārds</label>
-                        <input type="text" name="username" class="form-control" required>
+                    <input type="hidden" name="action" value="add_user">
+                    <div class="mb-2">
+                        <input type="text" name="username" placeholder="Lietotājvārds" class="form-control" required>
                     </div>
-                    <div class="mb-3">
-                        <label>Parole</label>
-                        <input type="password" name="password" class="form-control" required>
+                    <div class="mb-2">
+                        <input type="password" name="password" placeholder="Parole" class="form-control" required>
                     </div>
-                    <button type="submit" class="btn btn-success">Pievienot lietotāju</button>
+                    <button type="submit" class="btn btn-success w-100">Pievienot</button>
                 </form>
             </div>
         </div>
     </div>
 
-    <div class="col-md-6">
+    <div class="col-md-4">
+        <div class="card shadow-sm mb-4 border-primary">
+            <div class="card-header bg-primary text-white">Pievienot Chromebook</div>
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="action" value="add_computer">
+                    <div class="mb-2">
+                        <input type="text" name="comp_name" placeholder="Datora nosaukums" class="form-control" required>
+                    </div>
+                    <div class="mb-2">
+                        <input type="text" name="serial_number" placeholder="Sērijas numurs (S/N)" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Reģistrēt datoru</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
         <div class="card shadow-sm">
-            <div class="card-header bg-dark text-white">Sistēmas lietotāji</div>
-            <ul class="list-group list-group-flush">
-                {% for user in users %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    {{ user.username }}
-                    {% if user.is_admin %}<span class="badge bg-primary">Admin</span>{% endif %}
-                </li>
-                {% endfor %}
-            </ul>
+            <div class="card-header bg-danger text-white">Bojātie datori (Remonts)</div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% set damaged_count = namespace(value=0) %}
+                    {% for comp in computers %}
+                        {% if comp.status == 'Bojāts' %}
+                        {% set damaged_count.value = damaged_count.value + 1 %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ comp.name }}</strong><br>
+                                <small class="text-muted">{{ comp.serial_number }}</small>
+                            </div>
+                            <a href="{{ url_for('fix_computer', id=comp.id) }}" class="btn btn-success btn-sm">Saremontēts</a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    {% if damaged_count.value == 0 %}
+                        <li class="list-group-item text-center py-3 text-muted">Bojātu datoru nav.</li>
+                    {% endif %}
+                </ul>
+            </div>
         </div>
     </div>
 </div>
 
-<div class="mt-4">
-    <h3>Remonta vadība</h3>
-    <div class="alert alert-warning">Tikai administrators var apstiprināt, ka datori ir saremontēti.</div>
-    <div class="row">
-        {% for computer in computers %}
-            {% if computer.status == 'Bojāts' %}
-            <div class="col-md-4">
-                <div class="card border-danger mb-3">
-                    <div class="card-body">
-                        <h6>{{ computer.name }}</h6>
-                        <a href="{{ url_for('fix_computer', id=computer.id) }}" class="btn btn-success btn-sm w-100">Atzīmēt kā saremontētu</a>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
-        {% endfor %}
+<div class="row mt-4">
+    <div class="col-12">
+        <h3>Visi sistēmas datori</h3>
+        <table class="table table-striped table-bordered bg-white">
+            <thead>
+                <tr>
+                    <th>Nosaukums</th>
+                    <th>Sērijas numurs</th>
+                    <th>Statuss</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for comp in computers %}
+                <tr>
+                    <td>{{ comp.name }}</td>
+                    <td><code>{{ comp.serial_number }}</code></td>
+                    <td>{{ comp.status }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 {% endblock %}
