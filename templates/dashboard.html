@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2>Datoru saraksts</h2>
+    </div>
+    <div class="col-md-4 text-end">
+        <div class="badge bg-info text-dark p-2">{{ weather }}</div>
+    </div>
+</div>
+
+<div class="row">
+    {% for computer in computers %}
+    <div class="col-md-4 mb-3">
+        <div class="card h-100 shadow-sm border-{{ 'danger' if computer.status == 'Bojāts' else 'success' }}">
+            <div class="card-body">
+                <h5 class="card-title">{{ computer.name }}</h5>
+                <p class="card-text">Statuss: 
+                    <span class="badge {{ 'bg-danger' if computer.status == 'Bojāts' else 'bg-success' }}">
+                        {{ computer.status }}
+                    </span>
+                </p>
+                
+                {% if computer.status != 'Bojāts' %}
+                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#resModal{{computer.id}}">Rezervēt</button>
+                <a href="{{ url_for('report_damage', id=computer.id) }}" class="btn btn-sm btn-outline-warning">Ziņot par bojājumu</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="resModal{{computer.id}}" tabindex="-1">
+        <div class="modal-dialog">
+            <form action="{{ url_for('reserve') }}" method="POST" class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Rezervēt {{ computer.name }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="computer_id" value="{{ computer.id }}">
+                    <div class="mb-3">
+                        <label>Datums</label>
+                        <input type="date" name="date" class="form-control" required>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <label>No (HH:MM)</label>
+                            <input type="time" name="start_time" class="form-control" required>
+                        </div>
+                        <div class="col">
+                            <label>Līdz (HH:MM)</label>
+                            <input type="time" name="end_time" class="form-control" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Apstiprināt</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="mt-5">
+    <h3>Aktuālās rezervācijas</h3>
+    <table class="table table-hover bg-white shadow-sm">
+        <thead class="table-dark">
+            <tr>
+                <th>Dators</th>
+                <th>Lietotājs</th>
+                <th>Sākums</th>
+                <th>Beigas</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for res in reservations %}
+            <tr>
+                <td>{{ res.computer_id }}</td>
+                <td>{{ res.user_id }}</td>
+                <td>{{ res.start_time.strftime('%d.%m %H:%M') }}</td>
+                <td>{{ res.end_time.strftime('%H:%M') }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}
