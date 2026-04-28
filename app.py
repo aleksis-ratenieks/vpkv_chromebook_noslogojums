@@ -51,15 +51,21 @@ def reserve():
     start_str = request.form.get('start_time')
     end_str = request.form.get('end_time')
     
-    start_dt = datetime.datetime.strptime(f"{date_str} {start_str}", '%Y-%m-%d %H:%M')
-    end_dt = datetime.datetime.strptime(f"{date_str} {end_str}", '%Y-%m-%d %H:%M')
-    
-    new_res = Reservation(user_id=current_user.id, computer_id=comp_id, start_time=start_dt, end_time=end_dt)
-    db.session.add(new_res)
-    db.session.commit()
-    flash('Rezervācija veiksmīga!')
+    try:
+        # Pārbauda, vai datums ir ievadīts korekti
+        start_dt = datetime.datetime.strptime(f"{date_str} {start_str}", '%Y-%m-%d %H:%M')
+        end_dt = datetime.datetime.strptime(f"{date_str} {end_str}", '%Y-%m-%d %H:%M')
+        
+        new_res = Reservation(user_id=current_user.id, computer_id=comp_id, start_time=start_dt, end_time=end_dt)
+        db.session.add(new_res)
+        db.session.commit()
+        flash('Rezervācija veiksmīga!')
+    except Exception as e:
+        # Ja lietotājs neievada laiku pareizi vai serveris to nesaprot, izmet paziņojumu, nevis "uzkaras"
+        flash('Kļūda! Lūdzu, pārliecinieties, ka ievadījāt pareizu datumu un laiku.', 'error')
+        
     return redirect(url_for('dashboard'))
-
+    
 # --- JAUNS: Rezervācijas atcelšana ---
 @app.route('/cancel_reservation/<int:id>')
 @login_required
