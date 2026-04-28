@@ -5,7 +5,7 @@
         <h2>Datoru saraksts</h2>
     </div>
     <div class="col-md-4 text-end">
-        <span class="badge bg-info text-dark p-2">{{ weather }}</span>
+        <span class="badge bg-info text-dark p-2 fs-6">{{ weather }}</span>
     </div>
 </div>
 
@@ -15,14 +15,46 @@
         <div class="card h-100 shadow-sm border-{{ 'danger' if computer.status == 'Bojāts' else 'success' }}">
             <div class="card-body">
                 <h5 class="card-title">{{ computer.name }}</h5>
-                <p class="text-muted small">S/N: {{ computer.serial_number }}</p>
+                <p class="text-muted small mb-1">S/N: {{ computer.serial_number }}</p>
                 <p>Statuss: <span class="badge {{ 'bg-danger' if computer.status == 'Bojāts' else 'bg-success' }}">{{ computer.status }}</span></p>
                 
                 {% if computer.status != 'Bojāts' %}
-                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#resModal{{computer.id}}">Rezervēt</button>
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#resModal{{computer.id}}">Rezervēt</button>
                 <a href="{{ url_for('report_damage', id=computer.id) }}" class="btn btn-sm btn-outline-warning">Ziņot par bojājumu</a>
                 {% endif %}
             </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="resModal{{computer.id}}" tabindex="-1" aria-labelledby="resModalLabel{{computer.id}}" aria-hidden="true">
+        <div class="modal-dialog">
+            <form action="{{ url_for('reserve') }}" method="POST" class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="resModalLabel{{computer.id}}">Rezervēt: {{ computer.name }}</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="computer_id" value="{{ computer.id }}">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Datums</label>
+                        <input type="date" name="date" class="form-control" required>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <label class="form-label fw-bold">No (HH:MM)</label>
+                            <input type="time" name="start_time" class="form-control" required>
+                        </div>
+                        <div class="col">
+                            <label class="form-label fw-bold">Līdz (HH:MM)</label>
+                            <input type="time" name="end_time" class="form-control" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Atcelt</button>
+                    <button type="submit" class="btn btn-success">Apstiprināt</button>
+                </div>
+            </form>
         </div>
     </div>
     {% endfor %}
@@ -30,7 +62,7 @@
 
 <div class="mt-5">
     <h3>Aktuālās rezervācijas</h3>
-    <table class="table table-hover bg-white shadow-sm">
+    <table class="table table-hover bg-white shadow-sm rounded overflow-hidden">
         <thead class="table-dark">
             <tr>
                 <th>Dators (S/N)</th>
@@ -44,7 +76,7 @@
             <tr>
                 <td>{{ res.computer.name }} ({{ res.computer.serial_number }})</td>
                 <td>{{ res.user.username }}</td>
-                <td>{{ res.start_time.strftime('%d.%m %H:%M') }} - {{ res.end_time.strftime('%H:%M') }}</td>
+                <td>{{ res.start_time.strftime('%d.%m.%Y | %H:%M') }} - {{ res.end_time.strftime('%H:%M') }}</td>
                 <td>
                     {% if res.user_id == current_user.id or current_user.is_admin %}
                     <a href="{{ url_for('cancel_reservation', id=res.id) }}" class="btn btn-danger btn-sm">Atcelt</a>
@@ -52,8 +84,12 @@
                 </td>
             </tr>
             {% endfor %}
+            {% if not reservations %}
+            <tr>
+                <td colspan="4" class="text-center text-muted py-3">Pašlaik nav aktīvu rezervāciju.</td>
+            </tr>
+            {% endif %}
         </tbody>
     </table>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 {% endblock %}
