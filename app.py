@@ -16,14 +16,20 @@ login_manager.login_view = 'login'
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# --- Maršruti (Routes) ---
+# --- JAUNS: Iziet funkcija ---
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash('Jūs esat izrakstījies.')
+    return redirect(url_for('login'))
 
 @app.route('/')
 @login_required
 def dashboard():
-    """Galvenais skats: datori, statusi un laikapstākļi."""
-    weather = get_weather_data() # API izsaukums 
+    weather = get_weather_data()
     computers = Computer.query.all()
+    # Rādām visas rezervācijas, kas vēl nav beigušās
     reservations = Reservation.query.filter(Reservation.end_time >= datetime.datetime.now()).all()
     return render_template('dashboard.html', computers=computers, weather=weather, reservations=reservations)
 
@@ -40,13 +46,11 @@ def login():
 @app.route('/reserve', methods=['POST'])
 @login_required
 def reserve():
-    """Datora rezervācija ar laika posmu."""
     comp_id = request.form.get('computer_id')
     date_str = request.form.get('date')
     start_str = request.form.get('start_time')
     end_str = request.form.get('end_time')
     
-    # Loģika: Pārvēršam tekstus par datetime objektiem
     start_dt = datetime.datetime.strptime(f"{date_str} {start_str}", '%Y-%m-%d %H:%M')
     end_dt = datetime.datetime.strptime(f"{date_str} {end_str}", '%Y-%m-%d %H:%M')
     
@@ -56,54 +60,76 @@ def reserve():
     flash('Rezervācija veiksmīga!')
     return redirect(url_for('dashboard'))
 
+# --- JAUNS: Rezervācijas atcelšana ---
+@app.route('/cancel_reservation/<int:id>')
+@login_required
+def cancel_reservation(id):
+    res = Reservation.query.get(id)
+    if res and (res.user_id == current_user.id or current_user.is_admin):
+        db.session.delete(res)
+        db.session.commit()
+        flash('Rezervācija atcelta.')
+    return redirect(url_for('dashboard'))
+
 @app.route('/report_damage/<int:id>')
 @login_required
 def report_damage(id):
-    """Jebkurš lietotājs var atzīmēt kā bojātu."""
     comp = Computer.query.get(id)
     comp.status = "Bojāts"
     db.session.commit()
+    flash(f'Ziņots par {comp.name} bojājumu.')
     return redirect(url_for('dashboard'))
 
+# --- ATJAUNOTS: Admin panelis ar datoru pievienošanu un statusu labošanu ---
 @app.route('/admin', methods=['GET', 'POST'])
 @login_required
 def admin_panel():
-    """Admina panelis jaunu lietotāju reģistrācijai un statusu maiņai."""
     if not current_user.is_admin:
         return "Piekļuve liegta", 403
         
     if request.method == 'POST':
-        # Jauna lietotāja izveide
-        username = request.form.get('username')
-        password = request.form.get('password')
-        new_user = User(username=username, password=password)
-        db.session.add(new_user)
+        action = request.form.get('action')
+        
+        if action == 'add_user':
+            username = request.form.get('username')
+            password = request.form.get('password')
+            new_user = User(username=username, password=password)
+            db.session.add(new_user)
+            flash(f'Lietotājs {username} pievienots!')
+            
+        elif action == 'add_computer':
+            name = request.form.get('comp_name')
+            sn = request.form.get('serial_number')
+            new_comp = Computer(name=name, serial_number=sn)
+            db.session.add(new_comp)
+            flash(f'Dators {name} pievienots!')
+            
         db.session.commit()
-        flash(f'Lietotājs {username} pievienots!')
         
     users = User.query.all()
-    return render_template('admin.html', users=users)
+    computers = Computer.query.all() # Tagad padodam datorus admin panelim
+    return render_template('admin.html', users=users, computers=computers)
 
 @app.route('/fix/<int:id>')
 @login_required
 def fix_computer(id):
-    """Tikai admin var noņemt 'Bojāts' statusu."""
     if current_user.is_admin:
         comp = Computer.query.get(id)
         comp.status = "Pieejams"
         db.session.commit()
-    return redirect(url_for('dashboard'))
+        flash(f'Dators {comp.name} atzīmēts kā saremontēts.')
+    return redirect(url_for('admin_panel'))
 
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-        # Sākotnējo datu izveide (Vismaz 3 lietotāji) [cite: 16]
+        # Inicializācija ar Sērijas numuriem
         if not User.query.first():
             admin = User(username='admin', password='123', is_admin=True)
             u1 = User(username='skolotajs1', password='123')
             u2 = User(username='skolotajs2', password='123')
-            c1 = Computer(name='Chromebook #1')
-            c2 = Computer(name='Chromebook #2')
+            c1 = Computer(name='Chromebook #1', serial_number='SN-001-ABC')
+            c2 = Computer(name='Chromebook #2', serial_number='SN-002-XYZ')
             db.session.add_all([admin, u1, u2, c1, c2])
             db.session.commit()
     app.run(debug=True)
