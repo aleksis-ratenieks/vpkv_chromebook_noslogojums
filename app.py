@@ -1,7 +1,8 @@
 import datetime
+import re # JAUNUMS: Nepieciešams paroļu drošības pārbaudei
 from flask import Flask, render_template, redirect, url_for, request, flash
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-from werkzeug.security import generate_password_hash, check_password_hash # JAUNUMS: Šifrēšana
+from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User, Computer, Reservation
 from utils import get_weather_data
 
@@ -36,7 +37,6 @@ def dashboard():
 def login():
     if request.method == 'POST':
         user = User.query.filter_by(username=request.form.get('username')).first()
-        # JAUNUMS: Pārbauda šifrēto paroli datubāzē pret ievadīto tekstu
         if user and check_password_hash(user.password, request.form.get('password')):
             login_user(user)
             return redirect(url_for('dashboard'))
@@ -60,7 +60,7 @@ def reserve():
         db.session.commit()
         flash('Rezervācija veiksmīga!')
     except Exception as e:
-        flash('Kļūda! Lūdzu, pārliecinieties, ka ievadījāt pareizu datumu un laiku.', 'error')
+        flash('Kļūda! Lūdzu, pārliecinieties, ka ievadījāt pareizu datumu un laiku.')
         
     return redirect(url_for('dashboard'))
 
@@ -94,11 +94,16 @@ def admin_panel():
         
         if action == 'add_user':
             username = request.form.get('username')
-            # JAUNUMS: Paroles šifrēšana pirms saglabāšanas datubāzē
-            hashed_password = generate_password_hash(request.form.get('password'))
-            new_user = User(username=username, password=hashed_password)
-            db.session.add(new_user)
-            flash(f'Lietotājs {username} pievienots!')
+            password = request.form.get('password')
+            
+            # JAUNUMS: Aizmugursistēmas paroļu drošības pārbaude
+            if len(password) < 8 or not re.search(r"[A-Z]", password) or not re.search(r"[a-z]", password) or not re.search(r"\d", password) or not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+                flash('Sistēmas kļūda: Parole neatbilst drošības prasībām!')
+            else:
+                hashed_password = generate_password_hash(password)
+                new_user = User(username=username, password=hashed_password)
+                db.session.add(new_user)
+                flash(f'Lietotājs {username} pievienots sistēmā!')
             
         elif action == 'add_computer':
             name = request.form.get('comp_name')
@@ -126,11 +131,11 @@ def fix_computer(id):
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-        # JAUNUMS: Sākotnējo lietotāju paroles tiek nošifrētas
+        # JAUNUMS: Visas sākuma paroles nomainītas uz stingrajām prasībām
         if not User.query.first():
-            admin = User(username='admin', password=generate_password_hash('123'), is_admin=True)
-            u1 = User(username='skolotajs1', password=generate_password_hash('123'))
-            u2 = User(username='skolotajs2', password=generate_password_hash('123'))
+            admin = User(username='admin', password=generate_password_hash('Admin123!'), is_admin=True)
+            u1 = User(username='skolotajs1', password=generate_password_hash('Skolotajs1!'))
+            u2 = User(username='skolotajs2', password=generate_password_hash('Skolotajs2!'))
             c1 = Computer(name='Chromebook #1', serial_number='SN-001-ABC')
             c2 = Computer(name='Chromebook #2', serial_number='SN-002-XYZ')
             db.session.add_all([admin, u1, u2, c1, c2])
