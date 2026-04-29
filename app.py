@@ -52,13 +52,34 @@ def reserve():
     end_str = request.form.get('end_time')
     
     try:
+        # Pārvēršam tekstu par datuma/laika objektiem
         start_dt = datetime.datetime.strptime(f"{date_str} {start_str}", '%Y-%m-%d %H:%M')
         end_dt = datetime.datetime.strptime(f"{date_str} {end_str}", '%Y-%m-%d %H:%M')
         
+        # 1. PĀRBAUDE: Vai laiks ir loģisks? (Beigām jābūt pēc sākuma)
+        if end_dt <= start_dt:
+            flash('Kļūda! Rezervācijas beigu laikam jābūt vēlākam par sākuma laiku.')
+            return redirect(url_for('dashboard'))
+
+        # 2. PĀRBAUDE: Vai dators nav jau rezervēts šajā laikā?
+        # Datubāzē meklējam pārklāšanos konkrētam datoram
+        overlap = Reservation.query.filter(
+            Reservation.computer_id == comp_id,
+            Reservation.start_time < end_dt,  # Jaunais sākums ir pirms esošajām beigām
+            Reservation.end_time > start_dt   # Jaunās beigas ir pēc esošā sākuma
+        ).first()
+
+        if overlap:
+            # Ja atrod pārklāšanos, izmet paziņojumu un pārtrauc rezervāciju
+            flash(f'Neizdevās! Dators jau ir rezervēts no {overlap.start_time.strftime("%H:%M")} līdz {overlap.end_time.strftime("%H:%M")}.', 'danger')
+            return redirect(url_for('dashboard'))
+
+        # Ja viss kārtībā, saglabājam jauno rezervāciju datubāzē
         new_res = Reservation(user_id=current_user.id, computer_id=comp_id, start_time=start_dt, end_time=end_dt)
         db.session.add(new_res)
         db.session.commit()
         flash('Rezervācija veiksmīga!')
+        
     except Exception as e:
         flash('Kļūda! Lūdzu, pārliecinieties, ka ievadījāt pareizu datumu un laiku.')
         
