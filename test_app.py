@@ -12,8 +12,8 @@ class FlaskAppTests(unittest.TestCase):
 
         with app.app_context():
             db.create_all()
-            # Tests izmanto šifrēto paroli datu bāzes ģenerēšanā
-            hashed_pw = generate_password_hash('123')
+            # JAUNUMS: Testa paroli arī atjauninām uz drošu
+            hashed_pw = generate_password_hash('Admin123!')
             test_admin = User(username='test_admin', password=hashed_pw, is_admin=True)
             test_comp = Computer(name='Testa Dators', serial_number='SN-TEST-01')
             db.session.add(test_admin)
@@ -35,8 +35,8 @@ class FlaskAppTests(unittest.TestCase):
             user = User.query.filter_by(username='test_admin').first()
             self.assertIsNotNone(user)
             self.assertTrue(user.is_admin)
-            # JAUNUMS: Pārbauda, vai šifrētā parole atbilst sākotnējai "123"
-            self.assertTrue(check_password_hash(user.password, '123'))
+            # JAUNUMS: Pārbauda atjaunoto testa paroli
+            self.assertTrue(check_password_hash(user.password, 'Admin123!'))
 
     def test_computer_creation(self):
         with app.app_context():
