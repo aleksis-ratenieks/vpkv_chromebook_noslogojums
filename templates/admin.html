@@ -11,9 +11,18 @@
                         <input type="text" name="username" placeholder="Lietotājvārds" class="form-control" required>
                     </div>
                     <div class="mb-2">
-                        <input type="password" name="password" placeholder="Parole" class="form-control" required>
+                        <input type="password" id="new_password" name="password" placeholder="Parole" class="form-control" required>
                     </div>
-                    <button type="submit" class="btn btn-success w-100">Pievienot</button>
+                    
+                    <ul class="list-unstyled small mb-3">
+                        <li id="req-len" class="text-danger">❌ Vismaz 8 rakstzīmes</li>
+                        <li id="req-up" class="text-danger">❌ Vismaz 1 lielais burts</li>
+                        <li id="req-low" class="text-danger">❌ Vismaz 1 mazais burts</li>
+                        <li id="req-num" class="text-danger">❌ Vismaz 1 cipars</li>
+                        <li id="req-spec" class="text-danger">❌ Vismaz 1 īpašais simbols</li>
+                    </ul>
+                    
+                    <button type="submit" id="submit-user-btn" class="btn btn-success w-100" disabled>Pievienot</button>
                 </form>
             </div>
         </div>
@@ -87,4 +96,42 @@
         </table>
     </div>
 </div>
+
+<script>
+    document.getElementById('new_password').addEventListener('input', function() {
+        const pw = this.value;
+        
+        const reqLen = document.getElementById('req-len');
+        const reqUp = document.getElementById('req-up');
+        const reqLow = document.getElementById('req-low');
+        const reqNum = document.getElementById('req-num');
+        const reqSpec = document.getElementById('req-spec');
+        const submitBtn = document.getElementById('submit-user-btn');
+
+        let valid = true;
+
+        // Garuma pārbaude (8+)
+        if(pw.length >= 8) { reqLen.innerHTML = '✅ Vismaz 8 rakstzīmes'; reqLen.className = 'text-success'; } 
+        else { reqLen.innerHTML = '❌ Vismaz 8 rakstzīmes'; reqLen.className = 'text-danger'; valid = false; }
+
+        // Lielo burtu pārbaude
+        if(/[A-Z]/.test(pw)) { reqUp.innerHTML = '✅ Vismaz 1 lielais burts'; reqUp.className = 'text-success'; }
+        else { reqUp.innerHTML = '❌ Vismaz 1 lielais burts'; reqUp.className = 'text-danger'; valid = false; }
+
+        // Mazo burtu pārbaude
+        if(/[a-z]/.test(pw)) { reqLow.innerHTML = '✅ Vismaz 1 mazais burts'; reqLow.className = 'text-success'; }
+        else { reqLow.innerHTML = '❌ Vismaz 1 mazais burts'; reqLow.className = 'text-danger'; valid = false; }
+
+        // Ciparu pārbaude
+        if(/[0-9]/.test(pw)) { reqNum.innerHTML = '✅ Vismaz 1 cipars'; reqNum.className = 'text-success'; }
+        else { reqNum.innerHTML = '❌ Vismaz 1 cipars'; reqNum.className = 'text-danger'; valid = false; }
+
+        // Īpašo simbolu pārbaude
+        if(/[!@#$%^&*(),.?":{}|<>]/.test(pw)) { reqSpec.innerHTML = '✅ Vismaz 1 īpašais simbols'; reqSpec.className = 'text-success'; }
+        else { reqSpec.innerHTML = '❌ Vismaz 1 īpašais simbols'; reqSpec.className = 'text-danger'; valid = false; }
+
+        // Atspējo vai iespējo pogu
+        submitBtn.disabled = !valid;
+    });
+</script>
 {% endblock %}
