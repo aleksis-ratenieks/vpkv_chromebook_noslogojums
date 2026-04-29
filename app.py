@@ -1,6 +1,7 @@
 import datetime
 from flask import Flask, render_template, redirect, url_for, request, flash
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from werkzeug.security import generate_password_hash, check_password_hash # JAUNUMS: Šifrēšana
 from models import db, User, Computer, Reservation
 from utils import get_weather_data
 
@@ -16,7 +17,6 @@ login_manager.login_view = 'login'
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# --- JAUNS: Iziet funkcija ---
 @app.route('/logout')
 @login_required
 def logout():
@@ -29,7 +29,6 @@ def logout():
 def dashboard():
     weather = get_weather_data()
     computers = Computer.query.all()
-    # Rādām visas rezervācijas, kas vēl nav beigušās
     reservations = Reservation.query.filter(Reservation.end_time >= datetime.datetime.now()).all()
     return render_template('dashboard.html', computers=computers, weather=weather, reservations=reservations)
 
@@ -37,7 +36,8 @@ def dashboard():
 def login():
     if request.method == 'POST':
         user = User.query.filter_by(username=request.form.get('username')).first()
-        if user and user.password == request.form.get('password'):
+        # JAUNUMS: Pārbauda šifrēto paroli datubāzē pret ievadīto tekstu
+        if user and check_password_hash(user.password, request.form.get('password')):
             login_user(user)
             return redirect(url_for('dashboard'))
         flash('Nepareizs lietotājvārds vai parole!')
@@ -52,7 +52,6 @@ def reserve():
     end_str = request.form.get('end_time')
     
     try:
-        # Pārbauda, vai datums ir ievadīts korekti
         start_dt = datetime.datetime.strptime(f"{date_str} {start_str}", '%Y-%m-%d %H:%M')
         end_dt = datetime.datetime.strptime(f"{date_str} {end_str}", '%Y-%m-%d %H:%M')
         
@@ -61,12 +60,10 @@ def reserve():
         db.session.commit()
         flash('Rezervācija veiksmīga!')
     except Exception as e:
-        # Ja lietotājs neievada laiku pareizi vai serveris to nesaprot, izmet paziņojumu, nevis "uzkaras"
         flash('Kļūda! Lūdzu, pārliecinieties, ka ievadījāt pareizu datumu un laiku.', 'error')
         
     return redirect(url_for('dashboard'))
-    
-# --- JAUNS: Rezervācijas atcelšana ---
+
 @app.route('/cancel_reservation/<int:id>')
 @login_required
 def cancel_reservation(id):
@@ -86,7 +83,6 @@ def report_damage(id):
     flash(f'Ziņots par {comp.name} bojājumu.')
     return redirect(url_for('dashboard'))
 
-# --- ATJAUNOTS: Admin panelis ar datoru pievienošanu un statusu labošanu ---
 @app.route('/admin', methods=['GET', 'POST'])
 @login_required
 def admin_panel():
@@ -98,8 +94,9 @@ def admin_panel():
         
         if action == 'add_user':
             username = request.form.get('username')
-            password = request.form.get('password')
-            new_user = User(username=username, password=password)
+            # JAUNUMS: Paroles šifrēšana pirms saglabāšanas datubāzē
+            hashed_password = generate_password_hash(request.form.get('password'))
+            new_user = User(username=username, password=hashed_password)
             db.session.add(new_user)
             flash(f'Lietotājs {username} pievienots!')
             
@@ -113,7 +110,7 @@ def admin_panel():
         db.session.commit()
         
     users = User.query.all()
-    computers = Computer.query.all() # Tagad padodam datorus admin panelim
+    computers = Computer.query.all()
     return render_template('admin.html', users=users, computers=computers)
 
 @app.route('/fix/<int:id>')
@@ -129,11 +126,11 @@ def fix_computer(id):
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-        # Inicializācija ar Sērijas numuriem
+        # JAUNUMS: Sākotnējo lietotāju paroles tiek nošifrētas
         if not User.query.first():
-            admin = User(username='admin', password='123', is_admin=True)
-            u1 = User(username='skolotajs1', password='123')
-            u2 = User(username='skolotajs2', password='123')
+            admin = User(username='admin', password=generate_password_hash('123'), is_admin=True)
+            u1 = User(username='skolotajs1', password=generate_password_hash('123'))
+            u2 = User(username='skolotajs2', password=generate_password_hash('123'))
             c1 = Computer(name='Chromebook #1', serial_number='SN-001-ABC')
             c2 = Computer(name='Chromebook #2', serial_number='SN-002-XYZ')
             db.session.add_all([admin, u1, u2, c1, c2])
