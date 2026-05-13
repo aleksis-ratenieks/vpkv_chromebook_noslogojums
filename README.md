@@ -22,3 +22,15 @@
 2. Instalējiet nepieciešamās bibliotēkas izmantojot termināli:
    ```bash
    pip install -r requirements.txt
+   
+## 🔑 Sākotnējie piekļuves dati
+
+Pirmoreiz palaižot programmu, datubāzē automātiski tiek izveidoti trīs lietotāju konti. Visas paroles ir nošifrētas un atbilst sistēmas drošības politikai (vismaz 8 rakstzīmes, lielais burts, mazais burts, cipars un īpašais simbols).
+
+| Loma | Lietotājvārds | Parole | Galvenās tiesības |
+| :--- | :--- | :--- | :--- |
+| **Administrators** | `admin` | `Admin123!` | Lietotāju/datoru pievienošana, remontu apstiprināšana, visu rezervāciju vadība. |
+| **Skolotājs 1** | `skolotajs1` | `Skolotajs1!` | Datoru rezervēšana, savu rezervāciju atcelšana, ziņošana par bojājumiem. |
+| **Skolotājs 2** | `skolotajs2` | `Skolotajs2!` | Datoru rezervēšana, savu rezervāciju atcelšana, ziņošana par bojājumiem. |
+
+> **Piezīme:** Drošības apsvērumu dēļ pēc pirmās pieteikšanās ieteicams izmantot administratora paneli, lai reģistrētu jaunus lietotājus ar unikāliem piekļuves datiem.
