@@ -11,8 +11,14 @@
 * **Statusu vadība un remonti:** Skolotāji var ziņot par bojājumiem (dators tiek bloķēts rezervācijām), bet tikai Administrators var apstiprināt remonta pabeigšanu.
 * **API integrācija:** Reāllaika laikapstākļu datu attēlošana informācijas panelī.
 
+## Izmantotās tehnoloģijas
+* **Backend:** Python 3.x, Flask ietvars.
+* **Datu bāze:** SQLite (izmantojot Flask-SQLAlchemy OOP modeļus).
+* **Frontend:** HTML5, Bootstrap 5 (CSS karkass responsīvam dizainam), JavaScript.
+* **Testēšana:** Python iebūvētā `unittest` bibliotēka.
+
 ## Uzstādīšana un palaišana
-1. Pārliecinieties, ka datorā ir uzstādīts Python 3.
+1. Pārliecinieties, ka datorā ir uzstādīts Python.
 2. Instalējiet nepieciešamās bibliotēkas izmantojot termināli:
    ```bash
    pip install -r requirements.txt
