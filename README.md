@@ -1,28 +1,18 @@
-# vpkv_chromebook_noslogojums
-Programmēšana II eksāmena piekļuves darba projekts
 # Datoru Noslogojuma Sistēma (V.Plūdoņa Kuldīgas vidusskola)
 
-Šī sistēma izstrādāta kā Programmēšana II piekļuves darbs, lai automatizētu Chromebook datoru uzskaiti skolotājiem.
+Šī sistēma izstrādāta kā Programmēšana II eksāmena piekļuves darbs, lai automatizētu un digitalizētu Chromebook datoru uzskaiti, rezervāciju un tehniskā stāvokļa pārraudzību skolotājiem.
 
-## Funkcijas
-- **Autorizācija:** Droša pieteikšanās (Admin un Lietotāji).
-- **Rezervācija:** Lietotāji var rezervēt datoru konkrētam datumam un laikam.
-- **Statusu pārvaldība:** Iespēja ziņot par bojājumiem.
-- **Admin Panelis:** Jaunu lietotāju reģistrācija un iekārtu remontu apstiprināšana.
-- **API integrācija:** Reāllaika laikapstākļu dati Kuldīgā.
+## Galvenās funkcijas
+* **Droša autorizācija:** Lietotāju lomu sistēma (Administrators un Skolotāji) ar Werkzeug paroļu šifrēšanu (hashing).
+* **Stingrā paroļu politika:** Reāllaika (JavaScript) un aizmugursistēmas (Python Regex) paroļu validācija (vismaz 8 simboli, lielais burts, mazais burts, cipars, īpašais simbols).
+* **Viedā rezervācija:** Iespēja rezervēt tehniku noteiktam datumam un laikam (no/līdz).
+* **Pārklāšanās kontrole (Dubultās rezervācijas bloķēšana):** Algoritms, kas neļauj diviem lietotājiem rezervēt vienu un to pašu datoru vienā un tajā pašā laikā.
+* **Inventāra pārvaldība:** Katram datoram ir unikāls sērijas numurs (S/N).
+* **Statusu vadība un remonti:** Skolotāji var ziņot par bojājumiem (dators tiek bloķēts rezervācijām), bet tikai Administrators var apstiprināt remonta pabeigšanu.
+* **API integrācija:** Reāllaika laikapstākļu datu attēlošana informācijas panelī.
 
-## Izmantotās tehnoloģijas
-- Python 3.x (Flask)
-- SQLite datubāze
-- Bootstrap 5 (UI/UX dizainam)
-
-## Uzstādīšana
-1. Instalējiet bibliotēkas: `pip install flask flask-sqlalchemy flask-login requests`
-2. Palaidiet programmu: `python app.py`
-3. Atveriet pārlūkā: `http://127.0.0.1:5000`
-
-## Izstrādes principi (Vadlīnijas)
-Projektā ievēroti:
-- **KISS & DRY** principi vienkāršam un efektīvam kodam.
-- **OOP** struktūra datu modeļiem.
-- **Agile** izstrādes cikls.
+## Uzstādīšana un palaišana
+1. Pārliecinieties, ka datorā ir uzstādīts Python 3.
+2. Instalējiet nepieciešamās bibliotēkas izmantojot termināli:
+   ```bash
+   pip install -r requirements.txt
